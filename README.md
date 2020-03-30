@@ -1,7 +1,10 @@
 # POO_Tema6
  Se dau următoarele clase:
+ 
  -Persoană (int id, string nume, string cnp)
+ 
 -Abonat (string nr_telefon) : Persoana
+
 -Abonament (string nume_abonament, float pret, int perioadă)
 -Abonament_Premium (int reducere) : Abonament
 Să se construiască clasa Clienți care reține o listă de abonați. Să se afle numărul de abonați premium.
