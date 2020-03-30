@@ -2,6 +2,7 @@
  Se dau următoarele clase: 
 
 -Persoană (int id, string nume, string cnp) 
+
 -Abonat (string nr_telefon) : Persoana 
 
 -Abonament (string nume_abonament, float pret, int perioadă) 
