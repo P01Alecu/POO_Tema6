@@ -9,6 +9,7 @@ protected:
     int id;
     string nume;
     string cnp;
+    static int numar;
 public:
     persoana(int, string, string);
     persoana(persoana&);
@@ -20,9 +21,13 @@ public:
     virtual void afisare(ostream& out);
     friend ostream& operator<<(ostream& out, persoana& p);
     void operator=(const persoana&);
+    static void numar_persoane(){
+        cout << numar;}
 
 };
+int persoana::numar;
 persoana::persoana(int id = 0, string nume = "", string cnp = ""){
+    numar++;
     this->id = id;
     this->nume = nume;
     this->cnp = cnp;
@@ -34,17 +39,20 @@ persoana::~persoana(){
     cnp = "";
 }
 persoana::persoana(persoana& p){
+    numar++;
     this->id = p.id;
     this->nume = p.nume;
     this->cnp = p.cnp;
 }
 
 void persoana::set(int id = 0, string nume = "", string cnp = ""){
+    numar++;
     this->id = id;
     this->nume = nume;
     this->cnp = cnp;
 }
 void persoana::set(const persoana& p){
+    numar++;
     this->id = p.id;
     this->nume = p.nume;
     this->cnp = p.cnp;
@@ -80,6 +88,7 @@ void persoana::operator=(const persoana& p){
 /////////////////////////////////////////////abonat
 class abonat:public persoana{
     string nr_telefon;
+//    abonament **ab;
 public:
     abonat(int, string, string, string);
     ~abonat();
@@ -153,9 +162,9 @@ public:
     void set(string, float, int);
     void set(const abonament&);
 
-    void citire(istream& in);
+    virtual void citire(istream& in);
     friend istream& operator>>(istream& in, abonament& p);
-    void afisare(ostream& out);
+    virtual void afisare(ostream& out);
     friend ostream& operator<<(ostream& out, abonament& p);
     void operator=(const abonament&);
 };
@@ -270,30 +279,55 @@ void abonament_premium::operator=(const abonament_premium& p){
 
 /////////////////////////////////////////////////////////////////clienti
 class clienti{
-    abonat* a;
-    abonament* ab;
-    abonament_premium* abp;
+    int nr_p;
+    persoana **pers;
+    //abonament** ab;
 public:
-    clienti(abonat&);
+    clienti(abonat&, abonament&);
+    ~clienti();
+
+    void citire(istream&);
+    void afisare(ostream&);
+    friend istream& operator>>(istream& in, persoana& p);
+
 };
 
+clienti::clienti(abonat& p, abonament& ab){
+
+}
+clienti::~clienti(){
+    delete[] pers;
+//    delete[] ab;
+    nr_p = 0;
+}
 
 
 
 int main()
 {
-    persoana a;
-    persoana b;
-    a.set(1, "nume", "cnp");
-    b=a;
-    cout<<b<<endl;
+    /*
+    persoana *p = new abonat;
+    cin >> *p;
+    cout << *p <<endl;
 
-    abonat a1;
-    abonat b1;
-    a1.set(12, "nume", "cnp", "tel");
-    b1=a1;
-    cout<<b1;
+    abonat a(1,"qwe", "cnp", "tel");
 
+    persoana::numar_persoane();
+    */
+/*
+    persoana **pers;
+    pers = new persoana*[5];
 
+    pers[0] = new abonat;
+    cin >> *pers[0];
+
+    pers[1] = new persoana;
+    cin >> *pers[1];
+    for(int i =0; i<5;i++)
+        cout<<*pers[i]<<endl;*/
+
+    abonat a;
+    cin >> a;
+    cout<<a;
     return 0;
 }
