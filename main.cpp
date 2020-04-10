@@ -98,19 +98,20 @@ public:
     abonament(abonament&);
     ~abonament();
 
-    virtual void set(string, float, int);
-    virtual void set(const abonament&);
+    void set(string, float, int);
+    void set(const abonament&);
 
     virtual void citire(istream& in);
     friend istream& operator>>(istream& in, abonament& p);
     virtual void afisare(ostream& out);
     friend ostream& operator<<(ostream& out, abonament& p);
-    virtual void operator=(const abonament&);
+    void operator=(const abonament&);
     int setat(){
         if(nume_abonament == "" && pret == 0)
             return 0;
         return 1;
     }
+    virtual float venit(int);
 };
 
 abonament::abonament(string nume_abonament = "", float pret = 0, int perioada = 0){
@@ -164,6 +165,11 @@ void abonament::operator=(const abonament& p){
     this->pret = p.pret;
     this->perioada = p.perioada;
 }
+float abonament::venit(int perioada){
+    if (this->perioada < perioada)
+        perioada = this->perioada;  //nu putem calcula profitul pe o perioada mai lunga decat perioada abonamentului
+    return perioada * pret;
+}
 
 //////////////////////////////////////////////////////////abonament_premium
 class abonament_premium:public abonament{
@@ -181,6 +187,7 @@ public:
     friend ostream& operator<<(ostream& out, abonament_premium& p);
 
     void operator=(const abonament_premium& p);
+    float venit(int);
 };
 
 abonament_premium::abonament_premium(string nume_abonament = "", float pret = 0, int perioada = 0, int reducere = 0):abonament(nume_abonament, pret, perioada){
@@ -190,7 +197,7 @@ abonament_premium::abonament_premium(string nume_abonament = "", float pret = 0,
 abonament_premium::~abonament_premium(){
     reducere = 0;
 }
-void abonament_premium::set(string nume_abonament, float pret, int perioada, int reducere){
+void abonament_premium::set(string nume_abonament, float pret, int perioada, int reducere = 0){
     abonament::set(nume_abonament, pret, perioada);
     this->reducere = reducere;
 }
@@ -220,12 +227,17 @@ void abonament_premium::operator=(const abonament_premium& p){
     abonament::set(p);
     this->reducere = p.reducere;
 }
+float abonament_premium::venit(int perioada){
+    if (this->perioada < perioada)
+        perioada = this->perioada;  //nu putem calcula profitul pe o perioada mai lunga decat perioada abonamentului
+    return perioada * (pret - (reducere*pret/100));
+}
 
 /////////////////////////////////////////////abonat
 class abonat:public persoana{
     string nr_telefon;
     bool ok;
-    abonament *ab;
+    abonament_premium *ab;
 public:
     abonat(int, string, string, string, string, float, int, int);
     ~abonat();
@@ -238,6 +250,8 @@ public:
     void afisare(ostream& out);
     friend ostream& operator<<(ostream& out, abonat& p);
     void operator=(const abonat&);
+    bool premium();
+    float venit(int);
 };
 
 abonat::abonat(int id = 0, string nume = "", string cnp = "" ,string nr_telefon = "", string n_ab = "", float pret = 0, int perioada = 0, int reducere = 0):persoana(id, nume, cnp){
@@ -247,14 +261,14 @@ abonat::abonat(int id = 0, string nume = "", string cnp = "" ,string nr_telefon 
     else
     if(reducere == 0){      //daca se dau ca parametrii numele, pretul si perioada dar nu se da reducere inseamna ca este ab simplu
         ok = true;
-        ab = new abonament;
-        ab[0].set(n_ab, pret, perioada);
+        ab = (abonament_premium*) new abonament;
+        (*ab).set(n_ab, pret, perioada);
     }
     else{                      //daca sa da si reducere inseamna ca este abonament premium
         ok = true;
         ab = new abonament_premium;
         abonament_premium temp(n_ab, pret, perioada, reducere);
-        ab[0] = temp;
+        (*ab) = temp;
         //ab[0].set(n_ab, pret, perioada, reducere);
     }
 }
@@ -270,9 +284,9 @@ abonat::abonat(abonat& p){
     if(ok)
         delete[] ab;
     if(strcmp(typeid(p.ab[0]).name(), "9abonament") == 0){
-        ab = new abonament;
+        ab = (abonament_premium*) new abonament;
         ok = true;
-        ab[0].set(p.ab[0]);
+        (*ab).set(p.ab[0]);
     }
     else
     if(strcmp(typeid(p.ab[0]).name(), "17abonament_premium") == 0){
@@ -290,12 +304,12 @@ void abonat::set(int id, string nume, string cnp, string nr_telefon, string n_ab
     }
     if(n_ab == "" && pret == 0){
         ok = true;
-        ab = new abonament;
+        ab = (abonament_premium*)new abonament;
     }
     else
     if(reducere == 0){      //daca se dau ca parametrii numele, pretul si perioada dar nu se da reducere inseamna ca este ab simplu
         ok = true;
-        ab = new abonament;
+        ab = (abonament_premium*)new abonament;
         ab[0].set(n_ab, pret, perioada);
     }
     else{                      //daca sa da si reducere inseamna ca este abonament premium
@@ -313,7 +327,7 @@ void abonat::set(abonat& p){
     if(ok)
         delete[] ab;
     if(strcmp(typeid(p.ab[0]).name(), "9abonament") == 0){
-        ab = new abonament;
+        ab = (abonament_premium*)new abonament;
         ok = true;
         ab[0].set(p.ab[0]);
     }
@@ -334,11 +348,14 @@ void abonat::citire(istream& in){
     cout << "\nAbonat premium? 1/0\t ";
     bool pr;
     in >> pr;
-    if(pr)
+    if(pr){
         ab = new abonament_premium;
-    else
-        ab = new abonament;
-    in >> ab[0];
+        ok = true;
+    }
+    else{
+        ab = (abonament_premium*)new abonament;
+        ok = true;}
+    in >> (*ab);
 }
 istream& operator>>(istream& in, abonat& p){
     p.citire(in);
@@ -359,89 +376,121 @@ ostream& operator<<(ostream& out, abonat& p){
 void abonat::operator=(const abonat& p){
     persoana::set(p);
     this->nr_telefon = p.nr_telefon;
+    if(ok)
+        delete[] ab;
+    if(strcmp(typeid(p.ab[0]).name(), "9abonament") == 0){
+        ab = (abonament_premium*)new abonament;
+        ok = true;
+        ab[0].set(p.ab[0]);
+    }
+    else
+    if(strcmp(typeid(p.ab[0]).name(), "17abonament_premium") == 0){
+        ab = new abonament_premium;
+        ok = true;
+        ab[0].set(p.ab[0]);
+    }
 }
-
+bool abonat::premium(){
+    if(strcmp(typeid((*ab)).name(), "17abonament_premium") == 0)
+        return 1;
+    return 0;
+}
+float abonat::venit(int perioada){
+    return (*ab).venit(perioada);
+}
 
 /////////////////////////////////////////////////////////////////clienti
 class clienti{
     int nr_clienti;
-    persoana *pers;
+    abonat *pers;
 public:
     clienti();
     ~clienti();
 
     void citire(istream&);
     void afisare(ostream&);
-    friend istream& operator>>(istream& in, persoana& p);
-    friend ostream& operator<<(ostream& out, persoana& p);
+    friend istream& operator>>(istream& in, clienti& p);
+    friend ostream& operator<<(ostream& out, clienti& p);
+
+    //void ad(abonat&);   //adauga un abonat
+    int ab_premium();
+    float venit(int);
 };
 //int clienti::nr_clienti;
 clienti::clienti(){
-    //nr_clienti++;
     nr_clienti = 0;
 }
 clienti::~clienti(){
-    //delete[] pers;
-//    delete[] ab;
-    //nr_clienti--;
+    if(nr_clienti > 0)
+        delete[] pers;
+    nr_clienti = 0;
 }
 
 void clienti::citire(istream& in){
-    persoana *temp = new abonat[nr_clienti];
-    for(int i=0; i<nr_clienti; i++)
-        temp[i] = pers[i];
-    nr_clienti ++;
-    delete[] pers;
-    pers = new abonat[nr_clienti];
-    for(int i = 0; i < nr_clienti - 1; i++)
-        pers[i] = temp[i];
-    in >> pers[nr_clienti];
+    if (nr_clienti > 0){
+        abonat *temp = new abonat[nr_clienti];
+        for(int i=0; i<nr_clienti; i++)
+            temp[i] = pers[i];
+
+        nr_clienti ++;
+        delete[] pers;
+        pers = new abonat[nr_clienti];
+        for(int i = 0; i < nr_clienti - 1; i++)
+            pers[i] = temp[i];
+        in >> pers[nr_clienti-1];
+    }
+    else{
+        nr_clienti++;
+        pers = new abonat[nr_clienti];
+        in >> pers[nr_clienti-1];
+    }
 }
-/*
-istream& operator>>(istream& in, persoana& p){
+
+istream& operator>>(istream& in, clienti& p){
     p.citire(in);
-    return p;
-}*/
+    return in;
+}
 
 void clienti::afisare(ostream& out){
-    out << pers;
+    if(nr_clienti>0)
+        for(int i = 0; i < nr_clienti; i++)
+            out << pers[i] << "\n\n";
 }
-/*
-ostream& operator<<(ostream& out, persoana& p){
+
+ostream& operator<<(ostream& out, clienti& p){
     p.afisare(out);
-    return p;
-}*/
+    return out;
+}
+
+int clienti::ab_premium(){
+    int temp = 0;
+    if(nr_clienti > 0)
+        for(int i = 0; i < nr_clienti; i++){
+            if(pers[i].premium())
+                temp++;
+        }
+    return temp;
+}
+
+float clienti::venit(int perioada = 0){
+    float temp = 0;
+    for(int i = 0; i < nr_clienti; i++){
+        temp += pers[i].venit(perioada);
+    }
+    return temp;
+}
 
 int main()
 {
-    /*
-    persoana *p = new abonat;
-    cin >> *p;
-    cout << *p <<endl;
 
-    abonat a(1,"qwe", "cnp", "tel");
-
-    persoana::numar_persoane();
-    */
-/*
-    persoana **pers;
-    pers = new persoana*[5];
-
-    pers[0] = new abonat;
-    cin >> *pers[0];
-
-    pers[1] = new persoana;
-    cin >> *pers[1];
-    for(int i =0; i<5;i++)
-        cout<<*pers[i]<<endl;*/
-
-    //abonat a;
-    //cin >> a;
-    //cout<<a;
-
-    abonat b(12, "nume", "sa", "sa", "2131", 12, 12, 12);
     clienti a;
-//    cin >> a;
-//    cout << a;
+
+    cin >> a;
+    cin>>a;
+    cout << a;
+    cout<<"\n";
+    cout<<a.ab_premium()<<endl;
+    cout<< a.venit(12);
+
     return 0;
 }
