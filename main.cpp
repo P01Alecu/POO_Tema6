@@ -21,9 +21,10 @@ public:
     virtual void afisare(ostream& out);
     friend ostream& operator<<(ostream& out, persoana& p);
     void operator=(const persoana&);
-    static void numar_persoane(){
-        cout << numar;}
 
+    static void nr_pers(){
+        cout << numar;
+    }
 };
 int persoana::numar;
 persoana::persoana(int id = 0, string nume = "", string cnp = ""){
@@ -60,6 +61,7 @@ void persoana::set(const persoana& p){
 }
 
 void persoana::citire(istream& in){
+    numar++;
     cout << "Id persoana: ";
     in >> id;
     cout << "Nume persoana: ";
@@ -238,6 +240,7 @@ class abonat:public persoana{
     string nr_telefon;
     bool ok;
     abonament_premium *ab;
+    static int nr_p;
 public:
     abonat(int, string, string, string, string, float, int, int);
     ~abonat();
@@ -252,8 +255,10 @@ public:
     void operator=(const abonat&);
     bool premium();
     float venit(int);
+    static void numar_ab(){
+        cout << nr_p;}
 };
-
+int abonat::nr_p;
 abonat::abonat(int id = 0, string nume = "", string cnp = "" ,string nr_telefon = "", string n_ab = "", float pret = 0, int perioada = 0, int reducere = 0):persoana(id, nume, cnp){
     ok = false;
     this->nr_telefon = nr_telefon;
@@ -406,6 +411,7 @@ class clienti{
 public:
     clienti();
     ~clienti();
+    void ad(abonat&);
 
     void citire(istream&);
     void afisare(ostream&);
@@ -424,6 +430,25 @@ clienti::~clienti(){
     if(nr_clienti > 0)
         delete[] pers;
     nr_clienti = 0;
+}
+void clienti::ad(abonat& p){
+    if (nr_clienti > 0){
+        abonat *temp = new abonat[nr_clienti];
+        for(int i=0; i<nr_clienti; i++)
+            temp[i] = pers[i];
+
+        nr_clienti ++;
+        delete[] pers;
+        pers = new abonat[nr_clienti];
+        for(int i = 0; i < nr_clienti - 1; i++)
+            pers[i] = temp[i];
+        pers[nr_clienti-1] = p;
+    }
+    else{
+        nr_clienti++;
+        pers = new abonat[nr_clienti];
+        pers[nr_clienti-1] = p;
+    }
 }
 
 void clienti::citire(istream& in){
@@ -480,17 +505,93 @@ float clienti::venit(int perioada = 0){
     return temp;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+void menu_output()
+{
+	cout << "\n Alecu Florin Gabriel - Grupa 211 - 6 \n";
+	cout << "\n\t MENIU:";
+	cout << "\n===========================================\n";
+	cout << "\n";
+	cout << "1. Adauga clienti.\n";
+	cout << "2. Afisaza clientii.\n";
+	cout << "3. Vezi cati clienti au abonament premium.\n";
+	cout << "4. Vezi venitul pe o perioada de timp.\n";
+	cout << "5. Vezi de cate ori s-a creat o persoana.\n";
+	cout << "0. Iesire.\n";
+}
+
+void menu()
+{
+	int option;///optiunea aleasa din meniu
+	option = 0;
+
+	clienti a;
+	do
+	{
+		menu_output();
+
+		cout << "\nIntroduceti numarul actiunii: ";
+		cin >> option;
+
+		if (option == 1)
+		{
+            int n;
+            cout<< "Cati clienti vrei sa citesti? ";
+            cin >> n;
+            cout<<"\n";
+            if(n>0){
+                for(int i = 0; i < n; i++)
+                    cin >> a;
+            }
+		}
+        if (option == 2){
+            cout << a;
+        }
+        if (option == 3){
+            cout << a.ab_premium() << " au abonamente premium.\n";
+        }
+        if (option == 4){
+            int n;
+            cout << "Pe ce perioada de timp (in luni) doresti sa fie calculat venitul? ";
+            cin >> n;
+            cout << "Venitul de pe " << n << " luni este: " << a.venit(n);
+        }
+        if (option == 5){
+            cout << "Au fost create ";
+        persoana::nr_pers();
+        cout << " persoane. (in clasa clienti au fost folosite 'persoane' auxiliare pentru citire, si de aceea numarul acesta va fi mai mare decat numarul efectiv de persoane memorate)\n";
+        }
+		if (option == 0)
+		{
+			cout << "\nEXIT!\n";
+		}
+		if (option < 0 || option>5)
+		{
+			cout << "\nSelectie invalida\n";
+		}
+		cout << "\n";
+		system("pause"); ///Pauza - Press any key to continue...
+		system("cls");   ///Sterge continutul curent al consolei
+	} while (option != 0);
+}
 int main()
 {
-
+    //menu();
+    persoana *q = new abonat;
+    cin >> *q;
     clienti a;
-
-    cin >> a;
-    cin>>a;
-    cout << a;
-    cout<<"\n";
-    cout<<a.ab_premium()<<endl;
-    cout<< a.venit(12);
+    a.ad(*q);
+    cout << typeid(*q).name();
 
     return 0;
 }
