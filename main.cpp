@@ -279,8 +279,6 @@ abonat::abonat(int id = 0, string nume = "", string cnp = "" ,string nr_telefon 
 }
 abonat::~abonat(){
     nr_telefon = "";
-    //if(ok)
-      //  delete[] ab;
 }
 abonat::abonat(abonat& p){
     ok = false;
@@ -409,7 +407,8 @@ class clienti{
     int nr_clienti;
     abonat *pers;
 public:
-    clienti();
+    clienti(int, string, string, string, string, float, int, int);
+    clienti(clienti&);
     ~clienti();
     void ad(abonat&);
 
@@ -417,15 +416,40 @@ public:
     void afisare(ostream&);
     friend istream& operator>>(istream& in, clienti& p);
     friend ostream& operator<<(ostream& out, clienti& p);
-
-    //void ad(abonat&);   //adauga un abonat
+    void operator=(const clienti&);
     int ab_premium();
     float venit(int);
 };
-//int clienti::nr_clienti;
-clienti::clienti(){
-    nr_clienti = 0;
+
+clienti::clienti(int id = 0, string nume = "", string cnp = "" ,string nr_telefon = "", string n_ab = "", float pret = 0, int perioada = 0, int reducere = 0 ){
+    if(id == 0)
+        nr_clienti = 0;
+    else{
+        nr_clienti = 1;
+        pers = new abonat[nr_clienti];
+        pers[nr_clienti-1].set(id, nume, cnp, nr_telefon, n_ab, pret, perioada, reducere);
+    }
 }
+clienti::clienti(clienti& p){
+    if(p.nr_clienti > 0){
+        nr_clienti = p.nr_clienti;
+        pers = new abonat[p.nr_clienti];
+        for(int i = 0; i < p.nr_clienti; i++){
+            pers[i] = p.pers[i];
+        }
+    }
+}
+void clienti::operator=(const clienti& p){
+    if(p.nr_clienti > 0){
+        if(nr_clienti > 0 )
+            delete[] pers;
+        nr_clienti = p.nr_clienti;
+        pers = new abonat[p.nr_clienti];
+        for(int i =0 ; i < p.nr_clienti; i++)
+            pers[i] = p.pers[i];
+    }
+}
+
 clienti::~clienti(){
     if(nr_clienti > 0)
         delete[] pers;
@@ -443,6 +467,7 @@ void clienti::ad(abonat& p){
         for(int i = 0; i < nr_clienti - 1; i++)
             pers[i] = temp[i];
         pers[nr_clienti-1] = p;
+        delete[] temp;
     }
     else{
         nr_clienti++;
@@ -463,6 +488,7 @@ void clienti::citire(istream& in){
         for(int i = 0; i < nr_clienti - 1; i++)
             pers[i] = temp[i];
         in >> pers[nr_clienti-1];
+        delete[] temp;
     }
     else{
         nr_clienti++;
@@ -505,17 +531,7 @@ float clienti::venit(int perioada = 0){
     return temp;
 }
 
-
-
-
-
-
-
-
-
-
-
-
+/////////////////////////// meniu interactiv
 void menu_output()
 {
 	cout << "\n Alecu Florin Gabriel - Grupa 211 - 6 \n";
@@ -527,6 +543,7 @@ void menu_output()
 	cout << "3. Vezi cati clienti au abonament premium.\n";
 	cout << "4. Vezi venitul pe o perioada de timp.\n";
 	cout << "5. Vezi de cate ori s-a creat o persoana.\n";
+    cout << "6. Citeste si afisaza un abonat.(exemplificare upcast)\n";
 	cout << "0. Iesire.\n";
 }
 
@@ -571,11 +588,16 @@ void menu()
         persoana::nr_pers();
         cout << " persoane. (in clasa clienti au fost folosite 'persoane' auxiliare pentru citire, si de aceea numarul acesta va fi mai mare decat numarul efectiv de persoane memorate)\n";
         }
+        if (option == 6){
+            persoana *p = new abonat;
+            cin >> *p;
+            cout << *p;
+        }
 		if (option == 0)
 		{
 			cout << "\nEXIT!\n";
 		}
-		if (option < 0 || option>5)
+		if (option < 0 || option>6)
 		{
 			cout << "\nSelectie invalida\n";
 		}
@@ -586,12 +608,6 @@ void menu()
 }
 int main()
 {
-    //menu();
-    persoana *q = new abonat;
-    cin >> *q;
-    clienti a;
-    a.ad(*q);
-    cout << typeid(*q).name();
-
+    menu();
     return 0;
 }
